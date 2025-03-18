@@ -2,7 +2,15 @@
 
 ## 概要
 
-本記事では、ZENRIN Maps API の地図 API を使用してハザードマップ（洪水・土砂災害・地震・津波）を実装する方法を解説します。各ハザードの情報を JSON ファイルから取得し、地図上にオーバーレイとして表示できるようにします。
+本記事では、ZENRIN Maps API の地図 API を使用してハザードマップ（洪水・土砂災害・地震・津波）を実装する方法を解説します。各ハザードの情報を JSON ファイルから取得し、地図上にオーバーレイとして表示できるようにします。また、指定した地域の緯度・経度情報を活用し、地図にハザード情報を適切に表示する機能を追加します。
+
+### 📌 緯度・経度による地図表示：
+
+地図上に各市町村をピン表示し、リンク先に遷移することが可能です。
+
+### 📌 ポップアップ機能
+
+各ポイントをクリックすることで、該当するハザードマップの詳細 URL を表示するポップアップが表示されます。
 
 ### 📖 出典
 
@@ -147,7 +155,7 @@
 
 ZENRIN Maps API を利用するには、検証用 ID とパスワード（PW）を取得し、API キーを取得する必要があります。以下のリンクから申請・取得を行ってください
 
-[ZENRIN Maps API 　無料お試し ID 　お申込みフォーム](https://www.zenrin-datacom.net/solution/zenrin-maps-api/trial?fm_cp=6757baf3203e3a00bb118509&fm_mu=67639def1fd14c05d0cd1c27&utm_campaign=6757baf3203e3a00bb118509&utm_medium=else&utm_source=Qiita35)
+[ZENRIN Maps API 　無料お試し ID 　お申込みフォーム](https://www.zenrin-datacom.net/solution/zenrin-maps-api/trial?fm_cp=6757baf3203e3a00bb118509&fm_mu=6763a01208b9bc06e741d3e9&utm_campaign=6757baf3203e3a00bb118509&utm_medium=else&utm_source=Qiita53)
 
 [ コンソール](https://test-console.zmaps-api.com/)
 
@@ -222,15 +230,35 @@ function initMap() {
 
 ### 4. ハザードオーバーレイの表示・非表示切り替え
 
-各ハザード情報をオーバーレイとして地図上に描画し、ボタンで表示・非表示を切り替えます。
+オーバーレイ表示: data 配列から緯度・経度を使って Oval オーバーレイを作成し、地図に追加します。
+
+クリックイベント: オーバーレイをクリックすると、市町村のハザードマップ URL がポップアップで表示されます。
+
+ポップアップ作成: <a> タグでリンクを表示し、クリックすると新しいタブで詳細ページを開きます。
 
 ```js
-function toggleOvals(data, ovals, visible, color) {
+function toggleOvals(data, ovals, visible, color, removeOtherOvals) {
   if (visible.value) {
-    ovals.forEach((oval) => map.removeWidget(oval));
+    ovals.forEach((ovalObj) => {
+      map.removeWidget(ovalObj.oval);
+      if (ovalObj.popup) map.removeWidget(ovalObj.popup);
+    });
     ovals.length = 0;
     visible.value = false;
   } else {
+    // Remove other ovals
+    if (removeOtherOvals) {
+      floodOvals.forEach((obj) => map.removeWidget(obj.oval));
+      landslideOvals.forEach((obj) => map.removeWidget(obj.oval));
+      earthquakeOvals.forEach((obj) => map.removeWidget(obj.oval));
+      tsunamiOvals.forEach((obj) => map.removeWidget(obj.oval));
+      floodOvals.length = 0;
+      landslideOvals.length = 0;
+      earthquakeOvals.length = 0;
+      tsunamiOvals.length = 0;
+    }
+
+    // Add the ovals for the current hazard
     data.forEach((entry) => {
       var latLng = new ZDC.LatLng(entry.lat, entry.lng);
       var oval = new ZDC.Oval(
@@ -244,7 +272,35 @@ function toggleOvals(data, ovals, visible, color) {
         }
       );
       map.addWidget(oval);
-      ovals.push(oval);
+
+      // Add click event to the oval
+      oval.addEventListener("click", function () {
+        // Remove previous popup if exists
+        ovals.forEach((obj) => {
+          if (obj.popup) map.removeWidget(obj.popup);
+        });
+
+        // Create and add popup
+        var url = entry["掲載するURL"];
+        if (!url.startsWith("http")) {
+          url = "https://" + url;
+        }
+        var popupHtml = `
+                    <a href="${url}" target="_blank" onclick="event.stopPropagation();" 
+                       style="color: blue; text-decoration: underline;">
+                        ${entry["市町村"]} - 詳細を見る
+                    </a>
+                `;
+        var popup = new ZDC.Popup(latLng, { htmlSource: popupHtml });
+        map.addWidget(popup);
+
+        // Save the popup in the oval object to remove later
+        ovals.forEach((obj) => (obj.popup = null)); // Clear existing
+        ovalObj.popup = popup;
+      });
+
+      const ovalObj = { oval: oval, popup: null };
+      ovals.push(ovalObj);
     });
     visible.value = true;
   }
@@ -353,7 +409,7 @@ body {
 
 **初期表示**
 
-[参考サイト](https://bikram-pandey.github.io/web_projects/address_Search.html)
+[参考サイト](https://bikram-pandey.github.io/hazardMap/hazard_Map.html)
 
 ![alt text](image.png)
 
