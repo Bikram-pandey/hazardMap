@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zenrin Hazard Map</title>
+    <script
+        src="https://test-js.zmaps-api.com/zma_loader.js?key=O8iPysCxWSagAdi6h70ub7I3DreHA5Qi7EEyUorM&auth=referer"></script>
+
+    <script src="hazard_Map.js"></script>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        #ZMap {
+            position: absolute;
+            width: 100%;
+            top: 0;
+            bottom: 0;
+            height: 100vh;
+            z-index: 1;
+        }
+
+        #controlPanel {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            z-index: 2;
+        }
+
+        .toggleButton {
+            display: block;
+            width: 120px;
+            margin: 5px 0;
+            padding: 8px;
+            border: none;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 3px;
+            color: white;
+        }
+
+        .floodButton {
+            background: #e34633;
+        }
+
+        .floodButton:hover {
+            background: #c03222;
+        }
+
+        .landslideButton {
+            background: #007bff;
+        }
+
+        .landslideButton:hover {
+            background: #0056b3;
+        }
+
+        .earthquakeButton {
+            background: #28a745;
+        }
+
+        .earthquakeButton:hover {
+            background: #1e7e34;
+        }
+
+        .tsunamiButton {
+            background: #6f42c1;
+        }
+
+        .tsunamiButton:hover {
+            background: #5a3796;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="controlPanel">
+        <button class="toggleButton floodButton" onclick="toggleFlood()">洪水 (Flood)</button>
+        <button class="toggleButton landslideButton" onclick="toggleLandslide()">土砂崩れ (Landslide)</button>
+        <button class="toggleButton earthquakeButton" onclick="toggleEarthquake()">地震 (Earthquake)</button>
+        <button class="toggleButton tsunamiButton" onclick="toggleTsunami()">津波 (Tsunami)</button>
+    </div>
+    <div id="ZMap"></div>
+</body>
+
+</html>
